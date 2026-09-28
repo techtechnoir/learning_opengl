@@ -1,4 +1,4 @@
-#include <glad/glad.h>
+#include "glad/glad.h"
 #include <GLFW/glfw3.h>
 #include <iostream>
 
@@ -130,6 +130,27 @@ int main()
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
 
+    /*
+    A vertex array object (also known as VAO) can be bound just like a vertex buffer object and any
+    subsequent vertex attribute calls from that point on will be stored inside the VAO. This has the
+    advantage that when configuring vertex attribute pointers you only have to make those calls once
+    and whenever we want to draw the object, we can just bind the corresponding VAO. This makes
+    switching between different vertex data and attribute configurations as easy as binding a different
+    VAO. All the state we just set is stored inside the VAO. A vertex array object stores the following:
+        -Calls to glEnableVertexAttribArray or glDisableVertexAttribArray.
+        -Vertex attribute configurations via glVertexAttribPointer.
+        -Vertex buffer objects associated with vertex attributes by calls to glVertexAttribPointer.
+
+    To use a VAO all you have to do is bind the VAO using glBindVertexArray. From that
+    point on we should bind/configure the corresponding VBO(s) and attribute pointer(s) and then
+    unbind the VAO for later use. As soon as we want to draw an object, we simply bind the VAO with
+    the preferred settings before drawing the object and that is it.
+
+    a VAO that stores our vertex attribute configuration and which VBO to use. Usually when you have multiple
+    objects you want to draw, you first generate/configure all the VAOs (and thus the required VBO and
+    attribute pointers) and store those for later use. The moment we want to draw one of our objects, we
+    take the corresponding VAO, bind it, then draw the object and unbind the VAO again.
+    */
     // bind the Vertex Array Object first, then 
     // bind and set vertex buffer(s), and then 
     // configure vertex attributes(s).
@@ -188,6 +209,18 @@ int main()
 
         // draw our first triangle
         glUseProgram(shaderProgram);
+
+        /*
+        To draw our objects of choice, OpenGL provides us with the glDrawArrays function that draws
+        primitives using the currently active shader, the previously defined vertex attribute configuration and
+        with the VBO’s vertex data (indirectly bound via the VAO).
+
+        The glDrawArrays function takes as its first argument the OpenGL primitive type we would
+        like to draw. Since I said at the start we wanted to draw a triangle, and I don’t like lying to you, we
+        pass in GL_TRIANGLES. The second argument specifies the starting index of the vertex array we’d
+        like to draw; we just leave this at 0. The last argument specifies how many vertices we want to draw,
+        which is 3 (we only render 1 triangle from our data, which is exactly 3 vertices long).
+        */
         // seeing as we only have a single VAO there's no need to bind it every time, 
         // but we'll do so to keep things a bit more organized
         glBindVertexArray(VAO);
@@ -217,6 +250,13 @@ void process_input(GLFWwindow* window)
 {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
+
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
