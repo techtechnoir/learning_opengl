@@ -9,30 +9,26 @@ void processInput(GLFWwindow* window);
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
-/*
-Thankfully, element buffer objects work exactly like that. An EBO is a buffer, just like a vertex
-buffer object, that stores indices that OpenGL uses to decide what vertices to draw. This so called
-indexed drawing is exactly the solution to our problem.
-*/
-
+// shader sources
 const char* vertexShaderSource = R"glsl(
-layout
+#version 330 core
+layout (location = 0) in vec3 aPos;
 
+void main()
+{
+    gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0f);
+}
 )glsl";
 
-const char* vertexShaderSource = "#version 330 core\n"
-"layout (location = 0) in vec3 aPos;\n"
-"void main()\n"
-"{\n"
-"   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-"}\0";
+const char* fragmentShaderSource = R"glsl(
+#version 330 core
+out vec4 FragColor;
 
-const char* fragmentShaderSource = "#version 330 core\n"
-"out vec4 FragColor;\n"
-"void main()\n"
-"{\n"
-"   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
-"}\n\0";
+void main()
+{
+    FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
+}
+)glsl";
 
 int main()
 {
@@ -74,6 +70,7 @@ int main()
     unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
     glCompileShader(vertexShader);
+
     // check for shader compile errors
     int success;
     char infoLog[512];
@@ -83,10 +80,12 @@ int main()
         glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
         std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << '\n';
     }
+
     // fragment shader
     unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
     glCompileShader(fragmentShader);
+
     // check for shader compile errors
     glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
     if (!success)
@@ -94,11 +93,13 @@ int main()
         glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
         std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << '\n';
     }
+
     // link shaders
     unsigned int shaderProgram = glCreateProgram();
     glAttachShader(shaderProgram, vertexShader);
     glAttachShader(shaderProgram, fragmentShader);
     glLinkProgram(shaderProgram);
+
     // check for linking errors
     glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
     if (!success)
@@ -106,28 +107,46 @@ int main()
         glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
         std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << '\n';
     }
+
+    // delete shaders, fuck them
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
 
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
     float vertices[] = {
-         0.5f,  0.5f, 0.0f,  // top right
-         0.5f, -0.5f, 0.0f,  // bottom right
-        -0.5f, -0.5f, 0.0f,  // bottom left
-        -0.5f,  0.5f, 0.0f   // top left 
+         0.5f,  0.5f, 0.0f,  // top right       // 0
+         0.5f, -0.5f, 0.0f,  // bottom right    // 1
+        -0.5f, -0.5f, 0.0f,  // bottom left     // 2 
+        -0.5f,  0.5f, 0.0f   // top left        // 3
     };
-    unsigned int indices[] = {  // note that we start from 0!
-        0, 1, 3,  // first Triangle
-        1, 2, 3   // second Triangle
+
+    // note that we start from 0!
+    unsigned int indices[] = {
+        0, 1, 3,  // first Triangle     // top right, bottom right, top left
+        1, 2, 3   // second Triangle    // bottom right, bottom left, top left
     };
+
+
+    /*
+    An EBO is a buffer, just like a vertex
+    buffer object, that stores indices that OpenGL uses to decide what vertices to draw. This so called
+    indexed drawing is exactly the solution to our problem.
+    */
     unsigned int VBO, VAO, EBO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
     glGenBuffers(1, &EBO);
-    // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
-    glBindVertexArray(VAO);
 
+    /*
+    A VAO stores the glBindBuffer calls when the target is
+    GL_ELEMENT_ARRAY_BUFFER. This also means it stores its unbind calls so
+    make sure you don’t unbind the element array buffer before unbinding your VAO,
+    otherwise it doesn’t have an EBO configured.
+    */
+    // bind the Vertex Array Object first, then bind and set vertex buffer(s), 
+    // and then configure vertex attributes(s).
+    glBindVertexArray(VAO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
@@ -137,19 +156,19 @@ int main()
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
-    // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
+    // note that this is allowed, the call to glVertexAttribPointer registered VBO 
+    // as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-    // remember: do NOT unbind the EBO while a VAO is active as the bound element buffer object IS stored in the VAO; keep the EBO bound.
+    // remember: do NOT unbind the EBO while a VAO is active 
+    // as the bound element buffer object IS stored in the VAO; keep the EBO bound.
     //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-    // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
-    // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
+    // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, 
+    // but this rarely happens.Modifying other
+    // VAOs requires a call to glBindVertexArray anyways 
+    // so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
     glBindVertexArray(0);
-
-
-    // uncomment this call to draw in wireframe polygons.
-    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     // render loop
     // -----------
@@ -166,10 +185,32 @@ int main()
 
         // draw our first triangle
         glUseProgram(shaderProgram);
-        glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
+
+        /*
+        The last thing left to do is replace the glDrawArrays call with glDrawElements to indicate we want
+        to render the triangles from an index buffer. When using glDrawElements we’re going to draw
+        using indices provided in the element buffer object currently bound.
+
+        The first argument specifies the mode we want to draw in, similar to glDrawArrays. The
+        second argument is the count or number of elements we’d like to draw. We specified 6 indices so
+        we want to draw 6 vertices in total. The third argument is the type of the indices which is of type
+        GL_UNSIGNED_INT. The last argument allows us to specify an offset in the EBO (or pass in an
+        index array, but that is when you’re not using element buffer objects), but we’re just going to leave
+        this at 0.
+
+        The glDrawElements function takes its indices from the EBO currently bound to the
+        GL_ELEMENT_ARRAY_BUFFER target. This means we have to bind the corresponding EBO
+        each time we want to render an object with indices which again is a bit cumbersome. It just so
+        happens that a vertex array object also keeps track of element buffer object bindings. The last
+        element buffer object that gets bound while a VAO is bound, is stored as the VAO’s element buffer
+        object. Binding to a VAO then also automatically binds that EBO.
+        */
+        glBindVertexArray(VAO);
         //glDrawArrays(GL_TRIANGLES, 0, 6);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-        // glBindVertexArray(0); // no need to unbind it every time 
+
+        // no need to unbind it every time
+        glBindVertexArray(0);  
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
