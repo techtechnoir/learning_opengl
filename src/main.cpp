@@ -1,8 +1,16 @@
+/*
+    TWO TRIANGLES NEXT TO EACH OTHER WITHOUT USING TWO VBOS/VAOS
+    ONLY USING VERTICES AND THE LAST ARGUMENT OF THE FOLLOWING
+    FUNCTION glDrawArrays(GL_TRIANGLES, 0, 6); WE HAVE 6 VERTICES
+    NOT 3.
+    XD
+*/
+
 #include "glad/glad.h"
 #include <GLFW/glfw3.h>
 #include <iostream>
 
-void frame_buffer_size_callback(GLFWwindow* window, int width, int height);
+void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void process_input(GLFWwindow* window);
 
 const unsigned int SCR_WIDTH = 800;
@@ -11,25 +19,21 @@ const unsigned int SCR_HEIGHT = 600;
 const char* vertex_shader_source = R"glsl(
 #version 330 core
 layout (location = 0) in vec3 a_pos;
-layout (location = 1) in vec3 a_color;
-out vec3 vertex_color;
 
 void main()
 {
     gl_Position = vec4(a_pos, 1.0);
-    vertex_color = a_color;
 }
 
 )glsl";
 
 const char* fragment_shader_source = R"glsl(
 #version 330 core
-in vec3 vertex_color;
 out vec4 frag_color;
 
 void main()
 {
-    frag_color = vec4(vertex_color, 1.0);
+    frag_color = vec4(1.0f, 0.5f, 0.2f, 1.0f);
 }
 
 )glsl";
@@ -41,36 +45,37 @@ int main()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Hellyeah", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "HELLYEAH", NULL, NULL);
     if (window == NULL)
     {
-        std::cout << "Something went wrong during window creation!" << '\n';
+        std::cout << "Smt went wrong during window creation!" << '\n';
         glfwTerminate();
         return 1;
     }
 
     glfwMakeContextCurrent(window);
-    glfwSetWindowSizeCallback(window, frame_buffer_size_callback);
+    glfwSetWindowSizeCallback(window, framebuffer_size_callback);
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
-        std::cout << "GLAD did not load!" << '\n';
+        std::cout << "Smt went wrong during GLAD loading!" << '\n';
         glfwTerminate();
         return 1;
     }
+
+    int success;
+    char info_log[512];
 
     unsigned int vertex_shader;
     vertex_shader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertex_shader, 1, &vertex_shader_source, NULL);
     glCompileShader(vertex_shader);
 
-    int success;
-    char infolog[512];
     glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &success);
     if (!success)
     {
-        glGetShaderInfoLog(vertex_shader, 512, NULL, infolog);
-        std::cout << "Something went wrong during vertex shader compilation: " << infolog << '\n';
+        glGetShaderInfoLog(vertex_shader, 512, NULL, info_log);
+        std::cout << "Smt went wrong during vertex shader compiling: " << info_log << '\n';
     }
 
     unsigned int fragment_shader;
@@ -81,8 +86,8 @@ int main()
     glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &success);
     if (!success)
     {
-        glGetShaderInfoLog(fragment_shader, 512, NULL, infolog);
-        std::cout << "Something went wrong during fragment shader compilation: " << infolog << '\n';
+        glGetShaderInfoLog(fragment_shader, 512, NULL, info_log);
+        std::cout << "Smt went wrong during vertex shader compiling: " << info_log << '\n';
     }
 
     unsigned int shader_program;
@@ -94,50 +99,36 @@ int main()
     glGetProgramiv(shader_program, GL_LINK_STATUS, &success);
     if (!success)
     {
-        glGetProgramInfoLog(shader_program, 512, NULL, infolog);
-        std::cout << "Something went wrong during program linking: " << infolog << '\n';
+        glGetProgramInfoLog(shader_program, 512, NULL, info_log);
+        std::cout << "Smt went wrong during program linking: " << info_log << '\n';
     }
 
     glDeleteShader(vertex_shader);
     glDeleteShader(fragment_shader);
 
-    float vertices[] =
-    {
-         0.5f,  0.5f, 0.0f, 1.0f, 0.0f, 0.0f,   // top right       // 0
-         0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f,   // bottom right    // 1
-        -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f,   // bottom left     // 2 
-        -0.5f,  0.5f, 0.0f, 1.0f, 1.0f, 1.0f    // top left        // 3
+    float vertices[] = {
+        -0.9f, -0.4f, 0.0f,         // left  
+        -0.1f, -0.4f, 0.0f,         // right 
+        -0.5f,  0.4f, 0.0f,         // top
+
+        -0.1f, -0.4f, 0.0f,         // left  
+         0.7f, -0.4f, 0.0f,         // right 
+         0.3f,  0.4f, 0.0f          // top
     };
 
-    // note that we start from 0!
-    unsigned int indices[] =
-    {
-        0, 1, 3,  // first Triangle     // top right, bottom right, top left
-        1, 2, 3   // second Triangle    // bottom right, bottom left, top left
-    };
-
-    unsigned int VBO, EBO, VAO;
-    glGenBuffers(1, &VBO);
-    glGenBuffers(1, &EBO);
+    unsigned int VAO, VBO;
     glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
 
     glBindVertexArray(VAO);
-
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), (float*)vertices, GL_STATIC_DRAW);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 6, (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)0);
     glEnableVertexAttribArray(0);
-
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 6, (void*)(sizeof(float) * 3));
-    glEnableVertexAttribArray(1);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
     while (!glfwWindowShouldClose(window))
     {
@@ -147,22 +138,23 @@ int main()
 
         glUseProgram(shader_program);
         glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
 
+        glBindVertexArray(0);
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
-    glDeleteBuffers(1, &EBO);
     glDeleteProgram(shader_program);
 
     glfwTerminate();
+
     return 0;
 }
 
-void frame_buffer_size_callback(GLFWwindow* window, int width, int height)
+void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
     glViewport(0, 0, width, height);
 }
@@ -171,10 +163,4 @@ void process_input(GLFWwindow* window)
 {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
-
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
