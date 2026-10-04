@@ -1,9 +1,10 @@
 /*
-    TWO TRIANGLES NEXT TO EACH OTHER USING TWO VBOS/VAOS
-    AND TWO VERTICES ARRAYS. BEWARE THE FIRST ARGUMENT OF
-    glGenVertexArrays(2, VAOs) AND glGenBuffers(2, VBOs);
-    AS WELL AS THEIR DELETING FUNCTIONS. IT IS 2 SINCE
-    WE HAVE TWO-SIZED ARRAY OF INTEGERS (SHADERS) OTHERWISE,
+    TWO TRIANGLES WITH DIFFERENT COLORS NEXT TO EACH OTHER
+    USING TWO VBOS/VAOS AND TWO VERTICES ARRAYS.
+    BEWARE THE FIRST ARGUMENT OF glGenVertexArrays(2, VAOs)
+    AND glGenBuffers(2, VBOs); AS WELL AS THEIR DELETING FUNCTIONS.
+    IT IS 2 SINCE WE HAVE TWO-SIZED ARRAY OF INTEGERS (SHADERS).
+    ALSO, WE HAVE 2 FRAGMENT SHADERS AND SHADER PROGRAMS. OTHERWISE,
     EVERYTHING SAME AS SINGLE TRIANGLE, INCLUDING SHADER SOURCES.
     XD
 */
@@ -39,6 +40,18 @@ void main()
 }
 
 )glsl";
+
+const char* fragment_shader_source2 = R"glsl(
+#version 330 core
+out vec4 frag_color;
+
+void main()
+{
+    frag_color = vec4(1.0f, 1.0f, 0.0f, 1.0f);
+}
+
+)glsl";
+
 
 int main()
 {
@@ -92,6 +105,18 @@ int main()
         std::cout << "Smt went wrong during vertex shader compiling: " << info_log << '\n';
     }
 
+    unsigned int fragment_shader2;
+    fragment_shader2 = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragment_shader2, 1, &fragment_shader_source2, NULL);
+    glCompileShader(fragment_shader2);
+
+    glGetShaderiv(fragment_shader2, GL_COMPILE_STATUS, &success);
+    if (!success)
+    {
+        glGetShaderInfoLog(fragment_shader2, 512, NULL, info_log);
+        std::cout << "Smt went wrong during vertex shader compiling: " << info_log << '\n';
+    }
+
     unsigned int shader_program;
     shader_program = glCreateProgram();
     glAttachShader(shader_program, vertex_shader);
@@ -105,8 +130,22 @@ int main()
         std::cout << "Smt went wrong during program linking: " << info_log << '\n';
     }
 
+    unsigned int shader_program2;
+    shader_program2 = glCreateProgram();
+    glAttachShader(shader_program2, vertex_shader);
+    glAttachShader(shader_program2, fragment_shader2);
+    glLinkProgram(shader_program2);
+
+    glGetProgramiv(shader_program2, GL_LINK_STATUS, &success);
+    if (!success)
+    {
+        glGetProgramInfoLog(shader_program2, 512, NULL, info_log);
+        std::cout << "Smt went wrong during program linking: " << info_log << '\n';
+    }
+
     glDeleteShader(vertex_shader);
     glDeleteShader(fragment_shader);
+    glDeleteShader(fragment_shader2);
 
     float vertices[] = {
         -0.9f, -0.4f, 0.0f,         // left  
@@ -149,13 +188,15 @@ int main()
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        // common shader program
+        // shader program for the 1st triangle
         glUseProgram(shader_program);
 
         // bind VAO[0] and draw triangle with three vertices
         glBindVertexArray(VAO[0]);
         glDrawArrays(GL_TRIANGLES, 0, 3);
 
+        // shader program for the 2nd triangle
+        glUseProgram(shader_program2);
         // bind VAO[1] and draw triangle with three vertices
         glBindVertexArray(VAO[1]);
         glDrawArrays(GL_TRIANGLES, 0, 3);
@@ -169,6 +210,7 @@ int main()
     glDeleteVertexArrays(2, &VAO[0]);
     glDeleteBuffers(2, &VBO[0]);
     glDeleteProgram(shader_program);
+    glDeleteProgram(shader_program2);
 
     glfwTerminate();
 
