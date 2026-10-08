@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD 11)
 add_executable(OpenGLTriangle
     src/main.cpp
     src/glad/glad.c
+    src/shader.cpp
 )
 
 # Include directories (for glad)
