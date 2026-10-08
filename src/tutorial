@@ -1,0 +1,108 @@
+// Typical shader look
+/*
+    #version version_number
+
+    in type in_variable_name;
+    in type in_variable_name;
+    out type out_variable_name;
+    uniform type uniform_name;
+
+    void main()
+    {
+    // process input(s) and do some weird graphics stuff
+    ...
+    // output processed stuff to output variable
+    out_variable_name = weird_stuff_we_processed;
+    }
+*/
+
+// Vertex shader
+/*
+    When we’re talking specifically about the vertex shader
+    each input variable is also known as a vertex attribute.
+    There is a maximum number of vertex attributes we’re allowed
+    to declare limited by the hardware. OpenGL guarantees there are
+    always at least 16 4-component vertex attributes available,
+    but some hardware may allow for more which you can retrieve 
+    by querying:
+
+    int nrAttributes;
+    glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &nrAttributes);
+    std::cout
+        << "Maximum nr of vertex attributes supported: "
+        << nrAttributes << '\n';
+*/
+
+// Types
+/*
+    GLSL has these types: int, float, double, uint, bool.
+    It has also two container types: vectors, matrices
+
+    Vectors, n = 1, 2, 3, or 4.
+    vecn:   the default vector of n floats
+    bvecn:  a vector of n booleans
+    ivecn:  a vector of n integers
+    uvecn:  a vector of n unsigned integers
+    dvecn:  a vector of n doubles
+
+    To access its components, vec.x, vec.y, vec.z and vec.w
+
+    Swizzling:
+    vec2 some_vec;
+    vec4 different_vec  = some_vec.xyxx;
+    vec3 another_vec    = different_vec.zyw;
+    vec4 other_vec      = some_vec.xxxx + another_vec.yxzy;
+
+    Also:
+    vec2 vect       = vec2(0.5, 0.8);
+    vec4 result     = vec4(vect, 0.0, 0.0);
+    vec4 a_result   = vec4(result.xyz, 1.0);
+*/
+
+// In and Out
+/*
+    If we want to send data from one shader to the other we’d have to
+    declare an output in the sending shader and a similar input in the
+    receiving shader. When the types and the names are equal on both
+    sides OpenGL will link those variables together and then it is possible
+    to send data between shaders (this is done when linking a program
+    object).
+
+    Exception:
+    1-) The vertex shader thus requires an extra layout
+    specification for its inputs so we can link it with the vertex data.
+
+    2-) the fragment shader requires a vec4 color output variable,
+    since the fragment shaders needs to generate a final output color.
+
+*/
+
+
+// Uniforms
+/*
+    Uniforms are global, which means:
+    1-) You can access them (in your src code) from any
+    shader, you do not need to pass them from vertex shader.
+    2-) You can set the uniform value and it ll keep its value till it s set again.
+
+    For example in your shader source:
+        #version 330 core
+        out vec4 FragColor;
+        uniform vec4 ourColor; // we set this variable in the OpenGL code.
+        void main()
+        {
+            FragColor = ourColor;
+        }
+
+    And in your source code, you can update its value:
+        int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
+        glUseProgram(shaderProgram);
+        glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
+
+    glUniform4f could be glUniform3f and so on:
+        f: the function expects a float as its value.
+        i: the function expects an int as its value.
+        ui: the function expects an unsigned int as its value.
+        3f: the function expects 3 floats as its value.
+        fv: the function expects a float vector/array as its value.
+*/

@@ -1,17 +1,7 @@
-/*
-    TWO TRIANGLES WITH DIFFERENT COLORS NEXT TO EACH OTHER
-    USING TWO VBOS/VAOS AND TWO VERTICES ARRAYS.
-    BEWARE THE FIRST ARGUMENT OF glGenVertexArrays(2, VAOs)
-    AND glGenBuffers(2, VBOs); AS WELL AS THEIR DELETING FUNCTIONS.
-    IT IS 2 SINCE WE HAVE TWO-SIZED ARRAY OF INTEGERS (SHADERS).
-    ALSO, WE HAVE 2 FRAGMENT SHADERS AND SHADER PROGRAMS. OTHERWISE,
-    EVERYTHING SAME AS SINGLE TRIANGLE, INCLUDING SHADER SOURCES.
-    XD
-*/
-
 #include "glad/glad.h"
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include <cmath>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void process_input(GLFWwindow* window);
@@ -34,24 +24,14 @@ const char* fragment_shader_source = R"glsl(
 #version 330 core
 out vec4 frag_color;
 
-void main()
-{
-    frag_color = vec4(1.0f, 0.5f, 0.2f, 1.0f);
-}
-
-)glsl";
-
-const char* fragment_shader_source2 = R"glsl(
-#version 330 core
-out vec4 frag_color;
+uniform vec4 our_color;
 
 void main()
 {
-    frag_color = vec4(1.0f, 1.0f, 0.0f, 1.0f);
+    frag_color = our_color;
 }
 
 )glsl";
-
 
 int main()
 {
@@ -60,7 +40,7 @@ int main()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "HELLYEAH", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LEARN OPENGL", NULL, NULL);
     if (window == NULL)
     {
         std::cout << "Smt went wrong during window creation!" << '\n';
@@ -105,18 +85,6 @@ int main()
         std::cout << "Smt went wrong during vertex shader compiling: " << info_log << '\n';
     }
 
-    unsigned int fragment_shader2;
-    fragment_shader2 = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragment_shader2, 1, &fragment_shader_source2, NULL);
-    glCompileShader(fragment_shader2);
-
-    glGetShaderiv(fragment_shader2, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        glGetShaderInfoLog(fragment_shader2, 512, NULL, info_log);
-        std::cout << "Smt went wrong during vertex shader compiling: " << info_log << '\n';
-    }
-
     unsigned int shader_program;
     shader_program = glCreateProgram();
     glAttachShader(shader_program, vertex_shader);
@@ -130,57 +98,28 @@ int main()
         std::cout << "Smt went wrong during program linking: " << info_log << '\n';
     }
 
-    unsigned int shader_program2;
-    shader_program2 = glCreateProgram();
-    glAttachShader(shader_program2, vertex_shader);
-    glAttachShader(shader_program2, fragment_shader2);
-    glLinkProgram(shader_program2);
-
-    glGetProgramiv(shader_program2, GL_LINK_STATUS, &success);
-    if (!success)
-    {
-        glGetProgramInfoLog(shader_program2, 512, NULL, info_log);
-        std::cout << "Smt went wrong during program linking: " << info_log << '\n';
-    }
-
     glDeleteShader(vertex_shader);
     glDeleteShader(fragment_shader);
-    glDeleteShader(fragment_shader2);
 
     float vertices[] = {
-        -0.9f, -0.4f, 0.0f,         // left  
-        -0.1f, -0.4f, 0.0f,         // right 
-        -0.5f,  0.4f, 0.0f,         // top
+         0.5f, -0.5f, 0.0f,         // left  
+        -0.5f, -0.5f, 0.0f,         // right 
+         0.0f,  0.5f, 0.0f,         // top
     };
 
-    float vertices2[] = {
-        -0.1f, -0.4f, 0.0f,         // left  
-         0.7f, -0.4f, 0.0f,         // right 
-         0.3f,  0.4f, 0.0f          // top
-    };
+    unsigned int VAO, VBO;
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
 
-    unsigned int VAO[2], VBO[2];
-    glGenVertexArrays(2, &VAO[0]);
-    glGenBuffers(2, &VBO[0]);
-
-    // The 1st triangle
-    glBindVertexArray(VAO[0]);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), (float*)vertices, GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)0);
     glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-    //glBindVertexArray(0); // You may not need to unbind it (i ll tell in the next VAO binding)
+    //glBindVertexArray(0); // You may not need to unbind it
 
-    // The 2nd triangle
-    // note that we bind to a different VAO now so we did not need to unbind VAOs[0]
-    glBindVertexArray(VAO[1]);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO[1]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices2), (float*)vertices2, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)0);
-    glEnableVertexAttribArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0); // I ll unbind it cause i want to bind VAO[0] first in the loop
+    glBindVertexArray(0); // I ll unbind it cause i want to bind VAO in the loop
 
     while (!glfwWindowShouldClose(window))
     {
@@ -191,14 +130,23 @@ int main()
         // shader program for the 1st triangle
         glUseProgram(shader_program);
 
-        // bind VAO[0] and draw triangle with three vertices
-        glBindVertexArray(VAO[0]);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        /*
+        We query for the location of the our_color uniform using glGetUniformLocation.
+        We supply the shader program and the name of the uniform to the query function.
+        If glGetUniformLocation returns -1, it could not find the location. Lastly,
+        we can set the uniform value using the glUniform4f function. Note that finding the
+        uniform location does not require you to use the shader program first, but updating a
+        uniform does require you to first use the program (by calling glUseProgram), because
+        it sets the uniform on the currently active shader program.
+        glUniform4f(location, r, g, b, a);
+        */
+        float time_value = glfwGetTime();
+        float green_value = (sin(time_value) / 2.0f) + 0.5f;
+        int vertex_color_location = glGetUniformLocation(shader_program, "our_color");
+        glUniform4f(vertex_color_location, 0.0f, green_value, 0.0f, 1.0f);
 
-        // shader program for the 2nd triangle
-        glUseProgram(shader_program2);
-        // bind VAO[1] and draw triangle with three vertices
-        glBindVertexArray(VAO[1]);
+        // bind VAO and draw triangle with three vertices
+        glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 3);
 
         // unbind all of them to make it look more organized, you may not need tho
@@ -207,10 +155,9 @@ int main()
         glfwPollEvents();
     }
 
-    glDeleteVertexArrays(2, &VAO[0]);
-    glDeleteBuffers(2, &VBO[0]);
+    glDeleteVertexArrays(1, &VAO);
+    glDeleteBuffers(1, &VBO);
     glDeleteProgram(shader_program);
-    glDeleteProgram(shader_program2);
 
     glfwTerminate();
 
