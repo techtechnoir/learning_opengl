@@ -3,7 +3,6 @@
     #version version_number
 
     in type in_variable_name;
-    in type in_variable_name;
     out type out_variable_name;
     uniform type uniform_name;
 
@@ -31,6 +30,12 @@
     std::cout
         << "Maximum nr of vertex attributes supported: "
         << nrAttributes << '\n';
+
+
+    The GL_MAX_VERTEX_ATTRIBS limit in OpenGL does not directly mean the
+    total number of in variables you can declare; rather, it refers to
+    the maximum number of 4-component (vec4) slot locations available
+    to the vertex shader.
 */
 
 // Types
@@ -97,7 +102,7 @@
     And in your source code, you can update its value:
         int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
         glUseProgram(shaderProgram);
-        glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
+        glUniform4f(vertexColorLocation, some_value_1, some_value_2, some_value_3, some_value_4);
 
     glUniform4f could be glUniform3f and so on:
         f: the function expects a float as its value.
