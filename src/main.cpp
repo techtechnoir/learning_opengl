@@ -1,4 +1,5 @@
 #include "glad/glad.h"
+#include "shader.hpp"
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include <cmath>
@@ -8,30 +9,6 @@ void process_input(GLFWwindow* window);
 
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
-
-const char* vertex_shader_source = R"glsl(
-#version 330 core
-layout (location = 0) in vec3 a_pos;
-
-void main()
-{
-    gl_Position = vec4(a_pos, 1.0);
-}
-
-)glsl";
-
-const char* fragment_shader_source = R"glsl(
-#version 330 core
-out vec4 frag_color;
-
-uniform vec4 our_color;
-
-void main()
-{
-    frag_color = our_color;
-}
-
-)glsl";
 
 int main()
 {
@@ -58,48 +35,7 @@ int main()
         return 1;
     }
 
-    int success;
-    char info_log[512];
-
-    unsigned int vertex_shader;
-    vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertex_shader, 1, &vertex_shader_source, NULL);
-    glCompileShader(vertex_shader);
-
-    glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        glGetShaderInfoLog(vertex_shader, 512, NULL, info_log);
-        std::cout << "Smt went wrong during vertex shader compiling: " << info_log << '\n';
-    }
-
-    unsigned int fragment_shader;
-    fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragment_shader, 1, &fragment_shader_source, NULL);
-    glCompileShader(fragment_shader);
-
-    glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        glGetShaderInfoLog(fragment_shader, 512, NULL, info_log);
-        std::cout << "Smt went wrong during vertex shader compiling: " << info_log << '\n';
-    }
-
-    unsigned int shader_program;
-    shader_program = glCreateProgram();
-    glAttachShader(shader_program, vertex_shader);
-    glAttachShader(shader_program, fragment_shader);
-    glLinkProgram(shader_program);
-
-    glGetProgramiv(shader_program, GL_LINK_STATUS, &success);
-    if (!success)
-    {
-        glGetProgramInfoLog(shader_program, 512, NULL, info_log);
-        std::cout << "Smt went wrong during program linking: " << info_log << '\n';
-    }
-
-    glDeleteShader(vertex_shader);
-    glDeleteShader(fragment_shader);
+    Shader our_shader("../resources/shader.vs", "../resources/shader.fs");
 
     float vertices[] = {
          0.5f, -0.5f, 0.0f,         // left  
@@ -127,8 +63,8 @@ int main()
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        // shader program for the 1st triangle
-        glUseProgram(shader_program);
+        // shader program for the triangle
+        our_shader.use();
 
         /*
         We query for the location of the our_color uniform using glGetUniformLocation.
@@ -142,8 +78,8 @@ int main()
         */
         float time_value = glfwGetTime();
         float green_value = (sin(time_value) / 2.0f) + 0.5f;
-        int vertex_color_location = glGetUniformLocation(shader_program, "our_color");
-        glUniform4f(vertex_color_location, 0.0f, green_value, 0.0f, 1.0f);
+        int vertex_color_location = glGetUniformLocation(our_shader.get_program_id(), "our_color");
+        our_shader.set_float(vertex_color_location, green_value);
 
         // bind VAO and draw triangle with three vertices
         glBindVertexArray(VAO);
@@ -157,7 +93,7 @@ int main()
 
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
-    glDeleteProgram(shader_program);
+    glDeleteProgram(our_shader.get_program_id());
 
     glfwTerminate();
 
