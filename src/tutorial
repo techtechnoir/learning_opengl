@@ -1,9 +1,8 @@
 /*
-All tutorial is on:
--shader.hpp
--shader.cpp
--shader.vs
--shader.fs
--main.cpp
+EXERCISE OF THE TYPICAL TRIANGLE (VARYING GREEN)
+NOTHING DIFFERENT IN THIS FILE. WE ONLY CHANGED shader.vs.
 
+
+All tutorial is on:
+-shader.vs
 */
