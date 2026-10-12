@@ -1,3 +1,8 @@
+/*
+    Specify a horizontal offset via a uniform and move the triangle
+    to the right side of the screen in the vertex shader using this offset value.
+*/
+
 #include "glad/glad.h"
 #include "shader.hpp"
 #include <GLFW/glfw3.h>
@@ -57,6 +62,8 @@ int main()
 
     glBindVertexArray(0); // I ll unbind it cause i want to bind VAO in the loop
 
+    
+
     while (!glfwWindowShouldClose(window))
     {
         process_input(window);
@@ -80,6 +87,14 @@ int main()
         float green_value = (sin(time_value) / 2.0f) + 0.5f;
         int vertex_color_location = glGetUniformLocation(our_shader.get_program_id(), "our_color");
         our_shader.set_float(vertex_color_location, green_value);
+
+        /*
+        remember we do not need to use the program to find the location but we need to use it
+        to update the uniform so i had to write inside the render loop. i literally give time_value
+        divided by 10, if you divide it 100 you ll see it moves slower...
+        */
+        int offset_location = glGetUniformLocation(our_shader.get_program_id(), "offset");
+        our_shader.set_float(offset_location, time_value / 10.0f);
 
         // bind VAO and draw triangle with three vertices
         glBindVertexArray(VAO);
