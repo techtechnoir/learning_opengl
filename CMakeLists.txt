@@ -8,6 +8,7 @@ add_executable(OpenGLTriangle
     src/main.cpp
     src/glad/glad.c
     src/shader.cpp
+    src/stb_image.cpp
 )
 
 # Include directories (for glad)
