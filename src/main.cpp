@@ -82,14 +82,12 @@ int main()
     glBindVertexArray(0); 
 
     // load and create texture
-    unsigned int texture;
+    unsigned int textures[2];
     // first arg is the number of texture object we want to create
-    glGenTextures(1, &texture);
-    // all upcoming GL_TEXTURE_2D operations will now have effect on this texture obj.
-    // uniform sampler2D a_texture1 inside fs, it corresponds to GL_TEXTURE0
-    // so we do not call any uniform functions here but only activetexture
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture);
+    glGenTextures(2, &textures[0]);
+    // we do not use activetexture here, we will call find uniform function later
+    // we bind the first texture and set it up
+    glBindTexture(GL_TEXTURE_2D, textures[0]);
     // set the texture wrapping parameters (GL_REPEAT is default)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -99,28 +97,11 @@ int main()
 
     // load image, create texture and generate mipmaps
     int width, height, nr_channels;
-    // the last param is the desired number of channel, 0 means preserve original nrchannel
-    // 1 gray-scale, 2 gray-scale + alfa, 3 rgb, 4 rgba
     unsigned char* data = stbi_load("../resources/container.jpg", &width, &height, &nr_channels, 0);
     if (data)
     {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
-        /*
-        - 1st argument specifies the texture target; setting this to GL_TEXTURE_2D means this
-        operation will generate a texture on the currently bound texture object at the same target (so
-        any textures bound to targets GL_TEXTURE_1D or GL_TEXTURE_3D will not be affected).
-        - 2nd argument specifies the mipmap level for which we want to create a texture for if
-        you want to set each mipmap level manually, but we’ll leave it at the base level which is 0.
-        - 3rd argument tells OpenGL in what kind of format we want to store the texture. Our
-        image has only RGB values so we’ll store the texture with RGB values as well.
-        - 4th and 5th argument sets the width and height of the resulting texture. We stored those
-        earlier when loading the image so we’ll use the corresponding variables.
-        - 6th argument should always be 0 (some legacy stuff).
-        - 7th and 8th argument specify the format and datatype of the source image. We loaded the
-        image with RGB values and stored them as chars (bytes) so we’ll pass in the corresponding
-        values.
-        */
     }
 
     else
@@ -129,9 +110,41 @@ int main()
         return 1;
     }
 
-    // you may not need to unbind it
-    glBindTexture(GL_TEXTURE_2D, 0);
     stbi_image_free(data);
+
+    // we do not use activetexture here, we will call find uniform function later
+    // we bind the first texture and set it up
+    glBindTexture(GL_TEXTURE_2D, textures[1]);
+    // set the texture wrapping parameters (GL_REPEAT is default)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    // set the texture filtering parameters. remember we do not need mipmap for magnifying
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    data = stbi_load("../resources/awesomeface.png", &width, &height, &nr_channels, 0);
+    if (data)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+
+    else
+    {
+        std::cout << "Failed to load texture!" << '\n';
+        return 1;
+    }
+
+    stbi_image_free(data);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    // you gotta use the shader program to set uniforms
+    our_shader.use();
+    // either set it manually like so:
+    glUniform1i(glGetUniformLocation(our_shader.get_program_id(), "a_texture1"), 0);
+    // or set it via the texture class (this won't work gotta fix it)
+    //our_shader.set_int("a_texture2", 1);
+    glUniform1i(glGetUniformLocation(our_shader.get_program_id(), "a_texture2"), 1);
 
     while (!glfwWindowShouldClose(window))
     {
@@ -144,7 +157,9 @@ int main()
 
         // bind Texture
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture);
+        glBindTexture(GL_TEXTURE_2D, textures[0]);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, textures[1]);
 
         // bind VAO and draw triangle with three vertices
         glBindVertexArray(VAO);
@@ -157,7 +172,7 @@ int main()
         glfwPollEvents();
     }
 
-    glDeleteTextures(1, &texture);
+    glDeleteTextures(2, &textures[0]);
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
     glDeleteBuffers(1, &EBO);
