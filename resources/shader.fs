@@ -14,5 +14,8 @@ void main()
     // GLSL has built-in function called texture that takes 
     // its first arg as the texture sampler and 
     // its second arg as the corr textcoordinates
-    frag_color = texture(a_texture1, v_texcoord);
+    // To get a little funky we can also mix the resulting texture color 
+    // with the vertex colors. We simply multiply the resulting texture color 
+    // with the vertex color in the fragment shader to mix both colors: 
+    frag_color = texture(a_texture1, v_texcoord) * vec4(v_color, 1.0);
 }
