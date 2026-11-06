@@ -1,6 +1,6 @@
 /*
-    Make sure only the happy face looks in the other/reverse direction
-    by changing the fragment shader. Only change in shader.fs
+    Control the mixture amount by arrow keys. We created a float variable for it.
+    And assign it to a uniform inside a fragment shader. Changes only in main and fs.
 */
 
 
@@ -15,6 +15,9 @@ void process_input(GLFWwindow* window);
 
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
+
+// exists for the exercise
+float mix_amount = 0.2f;
 
 int main()
 {
@@ -153,6 +156,8 @@ int main()
     // or set it via the texture class (this won't work gotta fix it)
     //our_shader.set_int("a_texture2", 1);
     glUniform1i(glGetUniformLocation(our_shader.get_program_id(), "a_texture2"), 1);
+    // for the exercise, to control the mixture amount. INITIAL VALUE
+    glUniform1f(glGetUniformLocation(our_shader.get_program_id(), "mix_amount"), mix_amount);
 
     while (!glfwWindowShouldClose(window))
     {
@@ -162,6 +167,9 @@ int main()
 
         // shader program for the textured rectangle
         our_shader.use();
+
+        // for the exercise, to control the mixture amount
+        glUniform1f(glGetUniformLocation(our_shader.get_program_id(), "mix_amount"), mix_amount);
 
         // bind Texture
         glActiveTexture(GL_TEXTURE0);
@@ -206,4 +214,12 @@ void process_input(GLFWwindow* window)
     
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+        if (mix_amount < 1)
+            mix_amount += 0.001f;
+        
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+        if (mix_amount > 0)
+            mix_amount -= 0.001f;
 }
