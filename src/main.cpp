@@ -97,6 +97,8 @@ int main()
 
     // load image, create texture and generate mipmaps
     int width, height, nr_channels;
+    // to correct the flip
+    stbi_set_flip_vertically_on_load(true);  
     unsigned char* data = stbi_load("../resources/container.jpg", &width, &height, &nr_channels, 0);
     if (data)
     {
