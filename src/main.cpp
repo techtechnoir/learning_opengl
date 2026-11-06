@@ -1,3 +1,9 @@
+/*
+    Make sure only the happy face looks in the other/reverse direction
+    by changing the fragment shader. Only change in shader.fs
+*/
+
+
 #include "glad/glad.h"
 #include "shader.hpp"
 #include "stb_image.h"
