@@ -1,13 +1,10 @@
-/*
-    Control the mixture amount by arrow keys. We created a float variable for it.
-    And assign it to a uniform inside a fragment shader. Changes only in main and fs.
-*/
-
-
 #include "glad/glad.h"
 #include "shader.hpp"
 #include "stb_image.h"
 #include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include <iostream>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -169,6 +166,14 @@ int main()
 
         // for the exercise, to control the mixture amount
         glUniform1f(glGetUniformLocation(our_shader.get_program_id(), "mix_amount"), mix_amount);
+
+        // create transformation
+        glm::mat4 trans = glm::mat4(1.0f);
+        trans = glm::rotate(trans, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        trans = glm::scale(trans, glm::vec3(1.0f, 1.0f, 1.0f));
+
+        unsigned int transformLoc = glGetUniformLocation(our_shader.get_program_id(), "transform");
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
 
         // bind Texture
         glActiveTexture(GL_TEXTURE0);
