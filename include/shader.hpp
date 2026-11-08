@@ -24,15 +24,11 @@ public:
 
     // utility uniform functions*************************************
 
-    // You gotta use this function after getting the location of your
-    // uniform by int loc = glGetUniformLocation(instance.ID, "name");
-    void set_bool   (int location, bool value)   const;
-    // You gotta use this function after getting the location of your
-    // uniform by int loc = glGetUniformLocation(instance.ID, "name");
-    void set_int    (int location, int value)    const;
-    // You gotta use this function after getting the location of your
-    // uniform by int loc = glGetUniformLocation(instance.ID, "name");
-    void set_float  (int location, float value)  const;
+    // universal set function hopefully it will work
+    void set(const char* name, bool  value) const;
+    void set(const char* name, int   value) const;
+    void set(const char* name, float value) const;
+
 
     // To get the id of the program unsigned int ID:
     // this->ID = glCreateProgram();

@@ -96,21 +96,26 @@ void Shader::use()
     glUseProgram(this->ID);
 }
 
-void Shader::set_bool(int location, bool value) const
+void Shader::set(const char* name, bool  value) const
 {
-    glUniform1i(location, value);
-}
-void Shader::set_int(int location, int value) const
-{
-    glUniform1i(location, value);
+    int temp_location = glGetUniformLocation(this->ID, name);
+    glUniform1i(temp_location, value);
 }
 
-void Shader::set_float(int location, float value) const
+void Shader::set(const char* name, int   value) const
 {
-    glUniform1f(location, value);
+    int temp_location = glGetUniformLocation(this->ID, name);
+    glUniform1i(temp_location, value);
+}
+
+void Shader::set(const char* name, float value) const
+{
+    int temp_location = glGetUniformLocation(this->ID, name);
+    glUniform1f(temp_location, value);
 }
 
 unsigned int& Shader::get_program_id()
 {
     return this->ID;
 }
+

@@ -153,11 +153,10 @@ int main()
     our_shader.use();
     // either set it manually like so:
     glUniform1i(glGetUniformLocation(our_shader.get_program_id(), "a_texture1"), 0);
-    // or set it via the texture class (this won't work gotta fix it)
-    //our_shader.set_int("a_texture2", 1);
-    glUniform1i(glGetUniformLocation(our_shader.get_program_id(), "a_texture2"), 1);
+    // or set it via the texture class
+    our_shader.set("a_texture2", 1);
     // for the exercise, to control the mixture amount. INITIAL VALUE
-    glUniform1f(glGetUniformLocation(our_shader.get_program_id(), "mix_amount"), mix_amount);
+    our_shader.set("mix_amount", mix_amount);
 
     while (!glfwWindowShouldClose(window))
     {
