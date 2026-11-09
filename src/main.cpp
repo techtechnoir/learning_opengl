@@ -165,15 +165,14 @@ int main()
         our_shader.use();
 
         // for the exercise, to control the mixture amount
-        glUniform1f(glGetUniformLocation(our_shader.get_program_id(), "mix_amount"), mix_amount);
+        our_shader.set("mix_amount", mix_amount);
 
         // create transformation
         glm::mat4 trans = glm::mat4(1.0f);
-        trans = glm::rotate(trans, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-        trans = glm::scale(trans, glm::vec3(1.0f, 1.0f, 1.0f));
-
-        unsigned int transformLoc = glGetUniformLocation(our_shader.get_program_id(), "transform");
-        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
+        trans = glm::translate(trans, glm::vec3(0.5f, -0.5f, 0.0f));
+        trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));
+        trans = glm::scale(trans, glm::vec3(0.5f, 0.5f, 1.0f));
+        our_shader.set("transform", 1, GL_FALSE, glm::value_ptr(trans));
 
         // bind Texture
         glActiveTexture(GL_TEXTURE0);
@@ -221,9 +220,9 @@ void process_input(GLFWwindow* window)
 
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
         if (mix_amount < 1)
-            mix_amount += 0.001f;
+            mix_amount += 0.01f;
         
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
         if (mix_amount > 0)
-            mix_amount -= 0.001f;
+            mix_amount -= 0.01f;
 }

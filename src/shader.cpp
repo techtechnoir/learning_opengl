@@ -98,20 +98,26 @@ void Shader::use()
 
 void Shader::set(const char* name, bool  value) const
 {
-    int temp_location = glGetUniformLocation(this->ID, name);
+    GLint temp_location = glGetUniformLocation(this->ID, name);
     glUniform1i(temp_location, value);
 }
 
 void Shader::set(const char* name, int   value) const
 {
-    int temp_location = glGetUniformLocation(this->ID, name);
+    GLint temp_location = glGetUniformLocation(this->ID, name);
     glUniform1i(temp_location, value);
 }
 
 void Shader::set(const char* name, float value) const
 {
-    int temp_location = glGetUniformLocation(this->ID, name);
+    GLint temp_location = glGetUniformLocation(this->ID, name);
     glUniform1f(temp_location, value);
+}
+
+void Shader::set(const char* name, unsigned int count, bool transpose, const float* value) const
+{
+    GLint temp_location = glGetUniformLocation(this->ID, name);
+    glUniformMatrix4fv(temp_location, count, transpose, value);
 }
 
 unsigned int& Shader::get_program_id()
