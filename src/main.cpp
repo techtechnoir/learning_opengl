@@ -167,21 +167,31 @@ int main()
         // for the exercise, to control the mixture amount
         our_shader.set("mix_amount", mix_amount);
 
-        // create transformation
-        glm::mat4 trans = glm::mat4(1.0f);
-        trans = glm::translate(trans, glm::vec3(0.5f, -0.5f, 0.0f));
-        trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));
-        trans = glm::scale(trans, glm::vec3(0.5f, 0.5f, 1.0f));
-        our_shader.set("transform", 1, GL_FALSE, glm::value_ptr(trans));
-
         // bind Texture
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, textures[0]);
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, textures[1]);
 
-        // bind VAO and draw triangle with three vertices
+        // create first transformation and draw
+        glm::mat4 trans = glm::mat4(1.0f);
+        trans = glm::translate(trans, glm::vec3(0.5f, -0.5f, 0.0f));
+        trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));
+        trans = glm::scale(trans, glm::vec3(0.5f, 0.5f, 1.0f));
+        our_shader.set("transform", 1, GL_FALSE, glm::value_ptr(trans));
+        // with the uniform matrix set, draw the first container
         glBindVertexArray(VAO);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+        // reset first transformation, manipule it and draw it again
+        float scale_amount = static_cast<float>(sin(glfwGetTime()));
+        trans = glm::mat4(1.0f);
+        trans = glm::translate(trans, glm::vec3(-0.5f, 0.5f, 0.0f));
+        trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));
+        trans = glm::scale(trans, glm::vec3(scale_amount, scale_amount, scale_amount));
+        our_shader.set("transform", 1, GL_FALSE, &trans[0][0]); // same as glm::value_ptr
+        // with the uniform matrix set, draw the first container, you don't need to bind VAO
+        // since it is already bound
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
         // unbind all of them to make it look more organized, you may not need tho
