@@ -164,34 +164,37 @@ int main()
         // shader program for the textured rectangle
         our_shader.use();
 
-        // for the exercise, to control the mixture amount
-        our_shader.set("mix_amount", mix_amount);
-
         // bind Texture
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, textures[0]);
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, textures[1]);
 
-        // create first transformation and draw
-        glm::mat4 trans = glm::mat4(1.0f);
-        trans = glm::translate(trans, glm::vec3(0.5f, -0.5f, 0.0f));
-        trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));
-        trans = glm::scale(trans, glm::vec3(0.5f, 0.5f, 1.0f));
-        our_shader.set("transform", 1, GL_FALSE, glm::value_ptr(trans));
-        // with the uniform matrix set, draw the first container
-        glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        // for the exercise, to control the mixture amount
+        our_shader.set("mix_amount", mix_amount);
 
-        // reset first transformation, manipule it and draw it again
-        float scale_amount = static_cast<float>(sin(glfwGetTime()));
-        trans = glm::mat4(1.0f);
-        trans = glm::translate(trans, glm::vec3(-0.5f, 0.5f, 0.0f));
-        trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));
-        trans = glm::scale(trans, glm::vec3(scale_amount, scale_amount, scale_amount));
-        our_shader.set("transform", 1, GL_FALSE, &trans[0][0]); // same as glm::value_ptr
-        // with the uniform matrix set, draw the first container, you don't need to bind VAO
-        // since it is already bound
+        // create first transformation and draw
+        glm::mat4 model = glm::mat4(1.0f);
+        glm::mat4 view = glm::mat4(1.0f);
+        glm::mat4 projection;
+        model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+        projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
+        // find the uniforms (3 ways)
+        // it can be optimized by finding locations outside of the loop.
+        // 1.
+        unsigned int model_loc = glGetUniformLocation(our_shader.get_program_id(), "model");
+        glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model));
+        // 2.
+        unsigned int view_loc = glGetUniformLocation(our_shader.get_program_id(), "view");
+        glUniformMatrix4fv(view_loc, 1, GL_FALSE, &view[0][0]);
+        // 3.
+        // currently we set the projection matrix each frame, but since the projection matrix
+        // rarely changes it's often best practice to set it outside the main loop only once.
+        our_shader.set("projection", 1, GL_FALSE, &projection[0][0]);
+
+        // draw with the bound vao and given mat4 uniforms
+        glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
         // unbind all of them to make it look more organized, you may not need tho
