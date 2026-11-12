@@ -95,6 +95,20 @@ int main()
     -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
     };
 
+    // world space positions of our cubes
+    glm::vec3 cube_positions[] = {
+        glm::vec3( 0.0f,  0.0f,  0.0f),
+        glm::vec3( 2.0f,  5.0f, -15.0f),
+        glm::vec3(-1.5f, -2.2f, -2.5f),
+        glm::vec3(-3.8f, -2.0f, -12.3f),
+        glm::vec3( 2.4f, -0.4f, -3.5f),
+        glm::vec3(-1.7f,  3.0f, -7.5f),
+        glm::vec3( 1.3f, -2.0f, -2.5f),
+        glm::vec3( 1.5f,  2.0f, -2.5f),
+        glm::vec3( 1.5f,  0.2f, -1.5f),
+        glm::vec3(-1.3f,  1.0f, -1.5f)
+    };
+
     unsigned int VAO, VBO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
@@ -202,30 +216,38 @@ int main()
         our_shader.set("mix_amount", mix_amount);
 
         // create first transformation and draw
-        glm::mat4 model = glm::mat4(1.0f);
-        glm::mat4 view = glm::mat4(1.0f);
-        glm::mat4 projection;
-        model = glm::rotate(model, (float)(glfwGetTime() * glm::radians(-55.0f)),
-            glm::vec3(0.0f, 1.0f, 0.0f));
-        view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
-        projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
-        // find the uniforms (3 ways)
+        glm::mat4 view          = glm::mat4(1.0f);
+        glm::mat4 projection    = glm::mat4(1.0f);
+        projection      = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
+        view            = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
         // it can be optimized by finding locations outside of the loop.
-        // 1.
-        unsigned int model_loc = glGetUniformLocation(our_shader.get_program_id(), "model");
-        glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model));
-        // 2.
-        unsigned int view_loc = glGetUniformLocation(our_shader.get_program_id(), "view");
-        glUniformMatrix4fv(view_loc, 1, GL_FALSE, &view[0][0]);
-        // 3.
         // currently we set the projection matrix each frame, but since the projection matrix
         // rarely changes it's often best practice to set it outside the main loop only once.
+        our_shader.set("view", 1, GL_FALSE, glm::value_ptr(view));
         our_shader.set("projection", 1, GL_FALSE, &projection[0][0]);
 
         // draw with the bound vao and given mat4 uniforms
         // we do not have indices here so we directly draw all vertices
+        // also we will draw ten times with the same bound VAO but with different model
+        // matrices
         glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        for (size_t i = 0; i < 10; i++)
+        {
+            // TRS, first scale then rotate and finally translate
+            float angle_amount = glm::radians(10.0f * i);
+            glm::vec3 cube_position = cube_positions[i];
+            glm::mat4 model = glm::mat4(1.0f);
+            model = glm::translate(model, cube_position);
+            model = glm::rotate(model,
+                                (float)(angle_amount * glfwGetTime()),
+                                glm::vec3(1.0f, 0.3f, 0.5f));
+            model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
+            // find the location and set it as current model matrix
+            our_shader.set("model", 1, GL_FALSE, &model[0][0]);
+
+            // draw it ten times within the same iteration with the current matrices!
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
 
         // unbind all of them to make it look more organized, you may not need tho
         glBindTexture(GL_TEXTURE_2D, 0);
