@@ -115,7 +115,7 @@ int main()
 
     glBindVertexArray(VAO);
 
-    // 3 layouts in vertex shader, so 3 times vertex attributes
+    // 2 layouts in vertex shader, so 2 times vertex attributes
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), (float*)vertices, GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void*)0);
@@ -283,10 +283,8 @@ void process_input(GLFWwindow* window)
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
-        if (mix_amount < 1)
-            mix_amount += 0.01f;
-        
+        mix_amount = glm::clamp(mix_amount + 0.01f, 0.0f, 1.0f);
+
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
-        if (mix_amount > 0)
-            mix_amount -= 0.01f;
+        mix_amount = glm::clamp(mix_amount - 0.01f, 0.0f, 1.0f);
 }
