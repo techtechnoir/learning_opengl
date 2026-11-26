@@ -197,6 +197,11 @@ int main()
     // for the exercise, to control the mixture amount. INITIAL VALUE
     our_shader.set("mix_amount", mix_amount);
 
+    // pass projection matrix to shader (as projection matrix rarely changes 
+    //there's no need to do this per frame)
+    glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+    our_shader.set("projection", 1, GL_FALSE, &projection[0][0]);
+
     while (!glfwWindowShouldClose(window))
     {
         process_input(window);
@@ -215,37 +220,31 @@ int main()
         // for the exercise, to control the mixture amount
         our_shader.set("mix_amount", mix_amount);
 
-        // create first transformation and draw
-        glm::mat4 view          = glm::mat4(1.0f);
-        glm::mat4 projection    = glm::mat4(1.0f);
-        projection      = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
-        view            = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
-        // it can be optimized by finding locations outside of the loop.
-        // currently we set the projection matrix each frame, but since the projection matrix
-        // rarely changes it's often best practice to set it outside the main loop only once.
-        our_shader.set("view", 1, GL_FALSE, glm::value_ptr(view));
-        our_shader.set("projection", 1, GL_FALSE, &projection[0][0]);
+        // camera/view transformation
+        // make sure to initialize matrix to identity matrix first
+        // lookat function requires
+        //- camera position vec3 (not the scene position)
+        //- target position vec3 
+        //- vector that represents the up vector in world space vec3
+            //(the up vector we used for calculating the right vector)
+        glm::mat4 view = glm::mat4(1.0f);
+        float radius = 10.0f;
+        float cam_x = static_cast<float>(radius * sin(glfwGetTime()));
+        float cam_z = static_cast<float>(radius * cos(glfwGetTime()));
+        view = glm::lookAt(glm::vec3(cam_x, 0.0f, cam_z), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        our_shader.set("view", 1, GL_FALSE, &view[0][0]);
 
-        // draw with the bound vao and given mat4 uniforms
-        // we do not have indices here so we directly draw all vertices
-        // also we will draw ten times with the same bound VAO but with different model
-        // matrices
+        // render boxes
         glBindVertexArray(VAO);
-        for (size_t i = 0; i < 10; i++)
+        for (unsigned int i = 0; i < 10; i++)
         {
-            // TRS, first scale then rotate and finally translate
-            float angle_amount = glm::radians(10.0f * i);
-            glm::vec3 cube_position = cube_positions[i];
+            // calculate the model matrix for each object and pass it to shader before drawing
+            // nothing complex here
             glm::mat4 model = glm::mat4(1.0f);
-            model = glm::translate(model, cube_position);
-            model = glm::rotate(model,
-                                (float)(angle_amount * glfwGetTime()),
-                                glm::vec3(1.0f, 0.3f, 0.5f));
-            model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
-            // find the location and set it as current model matrix
+            model = glm::translate(model, cube_positions[i]);
+            float angle = 20.0f * i;
+            model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
             our_shader.set("model", 1, GL_FALSE, &model[0][0]);
-
-            // draw it ten times within the same iteration with the current matrices!
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
 
